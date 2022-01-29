@@ -9,11 +9,29 @@ import time
 import Parsers.ConfigParser as iniParser
 import Data.IniForm as iniForm
 import Bots.TradingBot as Bot
+from Utils.MultiProcessing import MultiProcess
 
 """ The initial program which runs a credentials check,
 creates and initializes a trading bot, then creates a
 session with the Webull API through the TradingBot class.
 """
+
+# Global multiprocess tracker used for asyncing methods
+process = {}
+
+def add_or_delete_processList(Process: MultiProcess, delete: bool = False):
+    id = Process.get_id
+
+    if delete is True:
+        if id in process.keys():
+            del[id]
+    else:
+        process[id] = Process
+
+def id_in_processList(Process: MultiProcess, Id: int) -> bool:
+    if Id in process.keys():
+        return True
+    return False
 
 # This is the start of our initialization
 if __name__ == '__main__':

@@ -3,6 +3,13 @@ from configparser import ConfigParser
 
 class IniForm:
     def __init__(self, file):
+        """This form creates a blank User_Credentials.ini file
+        for reading and writing
+
+        Usage:
+        ----
+        IniForm(filename)
+        """
         self.parse = {}
         self.file = file
         self.open = open(file, "w")

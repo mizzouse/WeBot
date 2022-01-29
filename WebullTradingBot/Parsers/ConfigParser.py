@@ -86,5 +86,6 @@ class IniOpen:
             return False
 
     def close(self):
+        """Closes the file, if opened"""
         self.open.close()
         

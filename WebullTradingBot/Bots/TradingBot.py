@@ -951,4 +951,6 @@ class TradingBot():
         return positions_lists
 
     def get_current_orders(self):
+        """Gets the current orders from Webull"""
         return self.__webull_client__.get_current_orders()
+
