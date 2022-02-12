@@ -1,5 +1,7 @@
 import pandas as pd
 
+import time
+
 from datetime import datetime
 from datetime import timezone
 
@@ -56,9 +58,8 @@ class AiBot():
         """
         if self.__trading_bot__ is None:
             raise Exception("Trading bot is not initialized. Ai bot cannot continue.")
-
-        if self.__trading_bot__.is_logged_in:
-            __monitor_markets()
+        else:
+            run_market_async()
         
     def monitor_market(self):
         """Automates and monitors the buying and selling
@@ -66,9 +67,8 @@ class AiBot():
         """
         if self.__trading_bot__ is None:
             raise Exception("Trading bot is not initialized. Ai bot cannot continue.")
-
-        if self.__trading_bot__.is_logged_in:
-            __monitor_markets
+        else:
+            run_market_async()
 
     def monitor_post_market(self):
         """Automates and monitors the buying and selling
@@ -76,23 +76,26 @@ class AiBot():
         """
         if self.__trading_bot__ is None:
             raise Exception("Trading bot is not initialized. Ai bot cannot continue.")
-
-        if self.__trading_bot__.is_logged_in:
-            __monitor_markets
+        else:
+            run_market_async()
 
     def run_market_async(self):
         """Starts the monitor market loop, checking for
         market times and performing trades
         """
-        from Utils.MultiProcessing import MultiProcess
+        from Utils.AsyncProcessing import MultiProcess
         process = MultiProcess()
+
+        # First tell trading bot to add it to their list to maintain it, then run the process
+        self.__trading_bot__.create_process_container(process)
+
         process.run(self.__monitor_markets)
 
     def __monitor_markets(self):
         """This monitors the actual market by using a while loop
         method from an async parallel call while the user is free
         to use commands. It is a private method only and called only
-        by setup_market_async.
+        by run_market_async.
         """
         while self.__trading_bot__.is_logged_in:
 
@@ -106,4 +109,23 @@ class AiBot():
             else:
                 self.Market_Type = AiBot.Market_Type.not_opened
                 print("Markets are closed. AI bot will not perform functions until a market opens.")
-                # TODO add a timer here with a length based on the amount of time remaining until pre-market opens
+
+                # Lets set a sleep timer for an hour then recheck
+                pre_market_startTime = datetime.utcnow().replace(
+                    hour = 9,
+                    minute = 00,
+                    second = 00
+                ).timestamp()
+
+                post_market_end_time = datetime.utcnow().replace(
+                    hour = 22,
+                    minute = 00,
+                    second = 00
+                ).timestamp()
+
+                current_time = datetime.utcnow().timestamp()
+
+                if (current_time >= post_market_end_time and current_time < pre_market_startTime):
+                    # If there is less than an hour left, ignore sleeping delays
+                    if (pre_market_startTime - current_time) > 3600:
+                        time.sleep(3600) # 60 secs * 60 mins(1hr) = 3600

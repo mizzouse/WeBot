@@ -9,9 +9,12 @@ from datetime import timezone
 from typing import List
 from typing import Dict
 from typing import Union
+from typing import Optional
 
 from enum import Enum
 from Utils.Enums import Login
+from Utils.AsyncProcessing import ProcessContainer, MultiProcess
+
 from Objects.Trades import Trade
 from Objects.Portfolios import Portfolio
 from Objects.StockFrame import StockFrame
@@ -27,8 +30,11 @@ class TradingBot():
 
         self.token_expireTime = None
 
+        # MultiProcess Controller List
+        self.process_container: ProcessContainer = None
+
         self.__webull_client__ = None
-        
+
     def _create_session(self, username: str, password: str, device_name = '', mfa = '', question_id = '', question_answer = '') -> bool:
         """Start a new session.
         Creates a new session with the Webull API and logs the user into
@@ -207,6 +213,25 @@ class TradingBot():
 
         return self.stock_frame
 
+    def create_process_container(self, processContainer: Optional[ProcessContainer] = None, Process: MultiProcess = None):
+        """Creates a process container to hold any async processes used by the bot
+        and adds it to the list
+        """
+        if Process is None:
+            raise Exception("create_process_container: multiprocess was not initialized.")
+
+        if processContainer is None:
+            self.process_container = ProcessContainer()
+        else:
+            self.process_container = processContainer
+
+        self.process_container.add_or_delete_processList(Process)
+
+    def delete_from_process_container(self, processContainer: Optional[ProcessContainer] = None, Process: MultiProcess = None):
+        """Deletes a process from the process container"""
+        if processContainer is not None:
+            pass
+
     def get_mfa(self, mfa: str):
         """Requests a multi-factor authentication code
         from Webull using the username or phone number.
@@ -263,13 +288,13 @@ class TradingBot():
         """
 
         pre_market_startTime = datetime.utcnow().replace(
-            hour = 8,
+            hour = 9,
             minute = 00,
             second = 00
         ).timestamp()
 
         market_start_time = datetime.utcnow().replace(
-            hour = 13,
+            hour = 11,
             minute = 30,
             second = 00
         ).timestamp()
@@ -293,13 +318,13 @@ class TradingBot():
         """
 
         post_market_end_time = datetime.utcnow().replace(
-            hour = 00,
+            hour = 22,
             minute = 00,
             second = 00
         ).timestamp()
 
         market_end_time = datetime.utcnow().replace(
-            hour = 20,
+            hour = 18,
             minute = 00,
             second = 00
         ).timestamp()
@@ -323,13 +348,13 @@ class TradingBot():
         """
 
         market_start_time = datetime.utcnow().replace(
-            hour = 13,
+            hour = 11,
             minute = 30,
             second = 00
         ).timestamp()
 
         market_end_time = datetime.utcnow().replace(
-            hour = 20,
+            hour = 18,
             minute = 00,
             second = 00
         ).timestamp()
@@ -351,11 +376,29 @@ class TradingBot():
 
     @property
     def is_logged_in(self) -> bool:
-        return self.__webull_client__.is_logged_in()
+        if self.__webull_client__ is None:
+            return False
+        else:
+            return self.__webull_client__.is_logged_in()
 
     @property
     def webull_client(self):
         return self.__webull_client__
+
+    def get_activities(self):
+        """Gets activities (if any) of transfers, trades, and dividends
+        and returns them in a dict or false if nothing available.
+        """
+        if self.__webull_client__ == None:
+            raise Exception("Webull client is not initialized.")
+
+        response = self.__webull_client__.get_activities()
+        if 'success' in response:
+            result = response['success']
+            if result is False:
+                return 'No activities to show'
+
+        return response
 
     def grab_current_quotes(self) -> dict:
         """Grabs the current quotes for all positions in the portfolio.
@@ -430,6 +473,13 @@ class TradingBot():
         quotes = self.session.get_quotes(instruments = list(symbols))
 
         return quotes
+
+    def get_current_orders(self):
+        """Gets the current orders from Webull"""
+        if self.__webull_client__ == None:
+            raise Exception("Webull client is not initialized.")
+
+        return self.__webull_client__.get_current_orders()
 
     def grab_historical_prices(self, start: datetime, end: datetime, bar_size: int = 1,
                                bar_type: str = 'minute', symbols: List[str] = None) -> List[dict]:
@@ -862,6 +912,7 @@ class TradingBot():
 
         return positions_parsed
 
+    #region Parsers
     def _parse_account_positions(self, positions_response: Union[List, Dict]) -> List[Dict]:
         """Parses the response from the `get_positions` into a more simplified list.
         Arguments:
@@ -949,8 +1000,5 @@ class TradingBot():
                         positions_lists.append(position_dict)
 
         return positions_lists
-
-    def get_current_orders(self):
-        """Gets the current orders from Webull"""
-        return self.__webull_client__.get_current_orders()
+#endregion
 

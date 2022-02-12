@@ -82,9 +82,9 @@ class StockFrame():
         """
 
         # Make a data frame.
-        price_df = pd.DataFrame(data=self._data)
-        price_df = self._parse_datetime_column(price_df=price_df)
-        price_df = self._set_multi_index(price_df=price_df)
+        price_df = pd.DataFrame(data = self._data)
+        price_df = self._parse_datetime_column(price_df = price_df)
+        price_df = self._set_multi_index(price_df = price_df)
 
         return price_df
 
@@ -152,8 +152,8 @@ class StockFrame():
             # Parse the Timestamp.
             time_stamp = pd.to_datetime(
                 quote['datetime'],
-                unit='ms',
-                origin='unix'
+                unit = 'ms',
+                origin = 'unix'
             )
 
             # Define the Index Tuple.
@@ -169,7 +169,7 @@ class StockFrame():
             ]
 
             # Create a new row.
-            new_row = pd.Series(data=row_values)
+            new_row = pd.Series(data = row_values)
 
             # Add the row.
             self.frame.loc[row_id, column_names] = new_row.values

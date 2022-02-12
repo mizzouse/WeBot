@@ -9,29 +9,11 @@ import time
 import Parsers.ConfigParser as iniParser
 import Data.IniForm as iniForm
 import Bots.TradingBot as Bot
-from Utils.MultiProcessing import MultiProcess
 
 """ The initial program which runs a credentials check,
 creates and initializes a trading bot, then creates a
 session with the Webull API through the TradingBot class.
 """
-
-# Global multiprocess tracker used for asyncing methods
-process = {}
-
-def add_or_delete_processList(Process: MultiProcess, delete: bool = False):
-    id = Process.get_id
-
-    if delete is True:
-        if id in process.keys():
-            del[id]
-    else:
-        process[id] = Process
-
-def id_in_processList(Process: MultiProcess, Id: int) -> bool:
-    if Id in process.keys():
-        return True
-    return False
 
 # This is the start of our initialization
 if __name__ == '__main__':
@@ -117,8 +99,10 @@ if __name__ == '__main__':
         bot._create_session(ini_file.read("Credentials", "user"), ini_file.read("Credentials", "pass"), "WeBot", mfa_code, question_id, security_answer)
     
     if bot.is_logged_in == True:
+        print("Login successful")
 
         # Set up our trading token for the bot
+        print("Trying trading token password...")
         trade = bot.unlock_trading(ini_file.read("TradeToken", "token"))
 
         # Was the trade token valid?
@@ -126,17 +110,27 @@ if __name__ == '__main__':
             print("Trade token password was not valid. No buying or selling orders will be completed.")
 
         # Are we automating our trades?
-        answer = input("Would you like to start automated trading? Type y or n\n")
-        if (answer == 'y' or answer == 'Y'):
-            from Bots.AiBot import AiBot
-            Ai = AiBot(bot.trading_account, bot)
+        #answer = input("Would you like to start automated trading? Type y or n\n")
+        #if (answer == 'y' or answer == 'Y'):
+            #from Bots.AiBot import AiBot
+            #Ai = AiBot(bot.trading_account, bot)
 
-            Ai.initiate_session()
+            #Ai.initiate_session()
             
+
+        #print(bot.get_activities())
+        #print(bot.webull_client.get_portfolio())
+        #print(bot.webull_client.get_positions())
+        #print(bot.webull_client.get_history_orders('All'))
+        #print(bot.webull_client.get_ticker('AMC'))
+        #print(bot.webull_client.get_quote('AMC'))
+        #print(bot.webull_client.get_news('AMC'))
+        #print(bot.webull_client.get_bars('AMC'))
+        #print(bot.webull_client.get_watchlists())
 
         # Place an order
         #wb.place_order(stock='PROG', price=1.93, quant=1)
 
         # Get all orders
-        orders = bot.get_current_orders()
-        print(orders)
+        #orders = bot.get_current_orders()
+        #print(orders)
